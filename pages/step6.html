@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 6: Set Up Openflow Deployment & Runtime</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html" class="active">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">6</div>
+            <h1>Set Up Openflow Deployment & Runtime</h1>
+            <p>Create the Openflow infrastructure (deployment + runtime) that will host our CDC connector.</p>
+        </div>
+
+        <div class="content">
+            <p>Before deploying a CDC connector, you need an <strong>Openflow Deployment</strong> (the control plane) and a <strong>Runtime</strong> (the execution environment). This step sets up both using the Snowflake-managed deployment option (SPCS).</p>
+
+            <h2>Step 6.1: Configure Core Snowflake Privileges</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Grant Openflow admin privileges
+USE ROLE ACCOUNTADMIN;
+
+-- Create a dedicated Openflow admin role
+CREATE ROLE IF NOT EXISTS OPENFLOW_ADMIN;
+GRANT ROLE OPENFLOW_ADMIN TO ROLE ACCOUNTADMIN;
+
+-- Grant required Openflow privileges
+GRANT CREATE OPENFLOW DATA PLANE INTEGRATION ON ACCOUNT TO ROLE OPENFLOW_ADMIN;
+GRANT CREATE OPENFLOW RUNTIME INTEGRATION ON ACCOUNT TO ROLE OPENFLOW_ADMIN;
+GRANT CREATE COMPUTE POOL ON ACCOUNT TO ROLE OPENFLOW_ADMIN;
+
+-- Set default role to OPENFLOW_ADMIN (ACCOUNTADMIN is blocked from Openflow runtimes)
+SET current_user_name = CURRENT_USER();
+ALTER USER IDENTIFIER($current_user_name) SET DEFAULT_ROLE = 'OPENFLOW_ADMIN';
+
+-- Set secondary roles for your user (required for Openflow auth)
+ALTER USER IDENTIFIER($current_user_name) SET DEFAULT_SECONDARY_ROLES = ('ALL');
+
+-- Grant Openflow admin role to your user
+GRANT ROLE OPENFLOW_ADMIN TO USER IDENTIFIER($current_user_name);</code></pre>
+            </div>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>ACCOUNTADMIN cannot access Openflow runtimes</strong>
+                    <p>Per Snowflake documentation, users with a default role of <code>ACCOUNTADMIN</code> are <strong>explicitly blocked</strong> from logging into Openflow - Snowflake Deployment runtimes. You must set your default role to a different role (e.g., <code>OPENFLOW_ADMIN</code>) before accessing the Openflow UI. If you skip this step, you will see the error: <em>"The role requested has been explicitly blocked for use with this application by an administrator."</em></p>
+                </div>
+            </div>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Why set DEFAULT_SECONDARY_ROLES?</strong>
+                    <p>Snowflake sessions have a <strong>primary role</strong> (the active role) and optional <strong>secondary roles</strong> that provide additional privileges. By setting <code>DEFAULT_SECONDARY_ROLES = ('ALL')</code>, your user automatically activates all granted roles (including <code>OPENFLOW_ADMIN</code>) as secondary roles in every session. This is required because the Openflow control plane authenticates using your user context and needs access to the <code>OPENFLOW_ADMIN</code> privileges&mdash;even when your primary role is set to something else (e.g., <code>SYSADMIN</code>). Without this setting, the Openflow UI may fail to authorize actions because the required role is not active in your session.</p>
+                </div>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>All statements execute successfully. The <code>OPENFLOW_ADMIN</code> role is created with the required privileges.</p>
+            </div>
+
+            <h2>Step 6.2: Create the Openflow Deployment</h2>
+
+            <ol>
+                <li>In Snowsight, navigate to <strong>Ingestion &rarr; Openflow</strong></li>
+                <li>Click <strong>Launch Openflow</strong> (a new tab opens)</li>
+                <li>Click <strong>Create a deployment</strong></li>
+                <li>In the Prerequisites step, confirm all requirements are met &rarr; click <strong>Next</strong></li>
+                <li>In the Deployment location step:
+                    <ul>
+                        <li>Select <strong>Snowflake</strong> as the deployment location</li>
+                        <li>Enter a deployment name: <code>openflow_lab_deployment</code></li>
+                    </ul>
+                </li>
+                <li>Click <strong>Create Deployment</strong></li>
+            </ol>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>The deployment is created and visible in the <strong>Deployments</strong> tab with status <strong>Active</strong>.</p>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Snowflake Deployment vs BYOC</strong>
+                    <p>We are using <strong>Snowflake Deployment</strong> (runs on Snowpark Container Services) which is simpler to set up. The alternative is <strong>BYOC</strong> (Bring Your Own Cloud) which runs in your own AWS account via CloudFormation.</p>
+                </div>
+            </div>
+
+            <h2>Step 6.3: Create the Snowflake Role for the Runtime</h2>
+
+            <p>The runtime needs a dedicated Snowflake role for accessing resources:</p>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Why a dedicated role and warehouse?</strong>
+                    <p>Although Openflow runs on SPCS (compute containers), it still needs to <strong>interact with Snowflake objects</strong>&mdash;writing CDC data into tables, creating schemas, and managing ingestion. These Snowflake operations require a <strong>role</strong> (to authorize access to databases, schemas, and tables) and a <strong>virtual warehouse</strong> (to provide compute for certain Snowflake operations like table creation and schema management). Think of it this way: SPCS handles the CDC connector execution (reading from Postgres, transforming data), while the role and warehouse handle the Snowflake-side authorization and compute. A dedicated role also follows the principle of least privilege&mdash;the runtime only has access to the specific resources it needs, keeping your account secure.</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>USE ROLE ACCOUNTADMIN;
+
+-- Create a dedicated role for the Openflow runtime
+CREATE ROLE IF NOT EXISTS OPENFLOW_RUNTIME_ROLE;
+
+-- Grant the role to the Openflow admin
+GRANT ROLE OPENFLOW_RUNTIME_ROLE TO ROLE OPENFLOW_ADMIN;
+GRANT ROLE OPENFLOW_RUNTIME_ROLE TO ROLE ACCOUNTADMIN;
+
+-- Create a warehouse for Openflow processing
+CREATE WAREHOUSE IF NOT EXISTS OPENFLOW_WH
+  WAREHOUSE_SIZE = 'XSMALL'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE;
+
+-- Grant warehouse access to the runtime role
+GRANT USAGE, OPERATE ON WAREHOUSE OPENFLOW_WH TO ROLE OPENFLOW_RUNTIME_ROLE;
+
+-- Create the destination database for CDC data
+CREATE DATABASE IF NOT EXISTS ECOMMERCE_CDC;
+
+-- Grant database access to the runtime role
+GRANT USAGE ON DATABASE ECOMMERCE_CDC TO ROLE OPENFLOW_RUNTIME_ROLE;
+GRANT CREATE SCHEMA ON DATABASE ECOMMERCE_CDC TO ROLE OPENFLOW_RUNTIME_ROLE;
+
+-- Grant role to your user
+GRANT ROLE OPENFLOW_RUNTIME_ROLE TO USER IDENTIFIER($current_user_name);</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>All statements execute successfully. The runtime role has access to the warehouse and destination database.</p>
+            </div>
+
+            <h2>Step 6.4: Create an External Access Integration (EAI)</h2>
+
+            <p>The runtime needs network access to connect to your Snowflake Postgres instance:</p>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Why is an External Access Integration (EAI) required?</strong>
+                    <p>Openflow Runtimes running on Snowpark Container Services (SPCS) are <strong>network-isolated by default</strong>&mdash;all outbound (egress) traffic is blocked. This is a security measure to prevent containers from making unauthorized connections. To allow the CDC connector to reach your Postgres instance, you must explicitly whitelist the destination host and port through a <strong>Network Rule</strong>, then wrap it in an <strong>External Access Integration</strong>. The EAI is then attached to the runtime, granting it permission to connect to only the specified endpoints. This ensures a zero-trust network posture where each runtime can only access the exact external services it needs.</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>USE ROLE ACCOUNTADMIN;
+
+-- Create a network rule allowing access to Snowflake Postgres
+-- Replace the host with your actual Postgres instance hostname
+CREATE OR REPLACE NETWORK RULE openflow_postgres_network_rule
+  MODE = EGRESS
+  TYPE = HOST_PORT
+  VALUE_LIST = ('YOUR_INSTANCE_HOST.YOUR-ACCOUNT.YOUR-REGION.aws.postgres.snowflake.app:5432');
+
+-- Create the External Access Integration
+CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION openflow_postgres_eai
+  ALLOWED_NETWORK_RULES = (openflow_postgres_network_rule)
+  ENABLED = TRUE;
+
+-- Grant the EAI to the runtime role
+GRANT USAGE ON INTEGRATION openflow_postgres_eai TO ROLE OPENFLOW_RUNTIME_ROLE;</code></pre>
+            </div>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>Replace the hostname!</strong>
+                    <p>Replace <code>YOUR_INSTANCE_HOST.YOUR-ACCOUNT.YOUR-REGION.aws.postgres.snowflake.app</code> with the actual hostname from your Postgres instance (Step 1). You can find it in the output of <code>SHOW POSTGRES INSTANCES;</code></p>
+                </div>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>Network rule and EAI are created. The runtime role has usage permission on the integration.</p>
+            </div>
+
+            <h2>Step 6.5: Create the Runtime</h2>
+
+            <ol>
+                <li>Return to the <strong>Openflow Control Plane</strong> tab in your browser</li>
+                <li>Click <strong>Create a runtime</strong></li>
+                <li>Configure the runtime:
+                    <table>
+                        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                        <tbody>
+                            <tr><td>Runtime Name</td><td><code>openflow_lab_runtime</code></td></tr>
+                            <tr><td>Deployment</td><td><code>openflow_lab_deployment</code></td></tr>
+                            <tr><td>Node Type</td><td>Small</td></tr>
+                            <tr><td>Min/Max Nodes</td><td>1 / 1</td></tr>
+                            <tr><td>Snowflake Role</td><td><code>OPENFLOW_RUNTIME_ROLE</code></td></tr>
+                            <tr><td>External Access Integrations</td><td><code>openflow_postgres_eai</code></td></tr>
+                        </tbody>
+                    </table>
+                </li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Runtime Creation Time</strong>
+                    <p>The runtime takes 2-5 minutes to start. Wait for it to show <strong>Active</strong> status in the Runtimes tab.</p>
+                </div>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>The runtime appears in the <strong>Runtimes</strong> tab with status <strong>Active</strong>. Clicking on it opens the Openflow canvas (empty at this point).</p>
+            </div>
+
+            <h2>Step 6.6: Configure Allowed Domains</h2>
+
+            <p>After the runtime is created, ensure the PostgreSQL JDBC connector domain is allowed. Navigate to the runtime settings and verify that your Postgres hostname is in the allowed list (it should be covered by the EAI you created above).</p>
+
+            <div class="callout success">
+                <span class="callout-icon">&#10004;</span>
+                <div class="callout-content">
+                    <strong>Openflow Infrastructure Ready!</strong>
+                    <p>Your Openflow deployment and runtime are active. Next, we'll deploy the PostgreSQL CDC connector into this runtime.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="step5.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">5. Enable Logical Replication</span></span></a>
+                <a href="step7.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">7. Deploy CDC Connector</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

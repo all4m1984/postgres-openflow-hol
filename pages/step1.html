@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 1: Deploy Postgres Instance</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html" class="active">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">1</div>
+            <h1>Deploy a Snowflake Postgres Instance</h1>
+            <p>Create a fully-managed PostgreSQL instance that will serve as our transactional data source.</p>
+        </div>
+
+        <div class="content">
+            <h3>Option A: Deploy via Snowsight UI</h3>
+            <ol>
+                <li>Log in to <strong>Snowsight</strong></li>
+                <li>Click the <strong>+</strong> button at the top of the navigation menu, or go to <strong>Manage &rarr; Postgres</strong></li>
+                <li>Click <strong>Create Instance</strong></li>
+                <li>Configure with these settings:</li>
+            </ol>
+
+            <table>
+                <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Instance Name</td><td><code>openflow_lab</code></td></tr>
+                    <tr><td>Instance Class</td><td>Burstable &mdash; 2 cores, 2 GB memory</td></tr>
+                    <tr><td>Storage</td><td>10 GB</td></tr>
+                    <tr><td>Postgres Version</td><td>17 (latest available)</td></tr>
+                    <tr><td>Network Policy</td><td>Create new or use existing (allow your IP)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Option B: Deploy via SQL</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Use ACCOUNTADMIN role
+USE ROLE ACCOUNTADMIN;
+
+-- Create a network rule to allow your IP address
+CREATE OR REPLACE NETWORK RULE openflow_lab_network_rule
+  MODE = INGRESS
+  TYPE = IPV4
+  VALUE_LIST = ('0.0.0.0/0');  -- Replace with your specific IP for production
+
+-- Create network policy
+CREATE OR REPLACE NETWORK POLICY openflow_lab_network_policy
+  ALLOWED_NETWORK_RULE_LIST = ('openflow_lab_network_rule');
+
+-- Create the Postgres instance
+CREATE POSTGRES INSTANCE openflow_lab
+  INSTANCE_CLASS = 'BURSTABLE'
+  CORES = 2
+  MEMORY_GB = 2
+  STORAGE_GB = 10
+  POSTGRES_VERSION = '17'
+  NETWORK_POLICY = 'openflow_lab_network_policy'
+  AUTO_RESUME = TRUE;</code></pre>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Note</strong>
+                    <p>Instance creation typically takes 2-5 minutes. Status changes from <code>PROVISIONING</code> to <code>RUNNING</code>.</p>
+                </div>
+            </div>
+
+            <h3>Retrieve Connection Credentials</h3>
+            <p>After creation, retrieve your connection details:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Check instance status and get connection details
+SHOW POSTGRES INSTANCES;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <p>You should see your instance with status <code>RUNNING</code> and a hostname like:<br>
+                <code>openflow-lab.your-account.us-west-2.aws.postgres.snowflake.app</code></p>
+            </div>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>Save Your Credentials</strong>
+                    <p>Store the connection string and password securely. The default admin user is <code>snowflake_admin</code>. You will need these for both connecting to Postgres and configuring the Openflow connector later.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="../index.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">Overview</span></span></a>
+                <a href="step2.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">2. Connect to Postgres</span></span></a>
+            </div>
+        </div>
+
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

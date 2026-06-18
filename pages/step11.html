@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 11: Test Real-Time CDC</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html" class="active">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">11</div>
+            <h1>Test Real-Time CDC (INSERT, UPDATE, DELETE)</h1>
+            <p>Make changes in Postgres and verify they're captured in real-time in Snowflake.</p>
+        </div>
+
+        <div class="content">
+            <p>Switch back to your <strong>psql terminal</strong> connected to Snowflake Postgres.</p>
+
+            <h3>Test INSERT: Add New Customers and Orders</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Insert new customers
+INSERT INTO ecommerce.customers (first_name, last_name, email, city) VALUES
+('Kevin', 'Hart', 'kevin@comedy.com', 'Philadelphia'),
+('Laura', 'Chen', 'laura@tech.com', 'San Francisco'),
+('Marcus', 'Williams', 'marcus@sports.com', 'Miami');
+
+-- Insert new orders
+INSERT INTO ecommerce.orders (order_date, customer_id, product_id, quantity, status) VALUES
+('2025-01-25', 11, 2, 1, 'pending'),
+('2025-01-25', 12, 5, 2, 'pending'),
+('2025-01-26', 13, 3, 1, 'processing');</code></pre>
+            </div>
+
+            <h3>Test UPDATE: Modify Existing Records</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Update order statuses (simulating order fulfillment)
+UPDATE ecommerce.orders SET status = 'shipped' WHERE order_id = 7;
+UPDATE ecommerce.orders SET status = 'completed' WHERE order_id = 10;
+
+-- Update product stock after orders
+UPDATE ecommerce.products SET stock_quantity = stock_quantity - 1 WHERE product_id = 2;
+UPDATE ecommerce.products SET stock_quantity = stock_quantity - 2 WHERE product_id = 5;
+
+-- Update customer email
+UPDATE ecommerce.customers SET email = 'alice.smith@newemail.com' WHERE customer_id = 1;</code></pre>
+            </div>
+
+            <h3>Test DELETE: Remove a Record</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Cancel an order (delete)
+DELETE FROM ecommerce.orders WHERE order_id = 11;</code></pre>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>CDC Latency</strong>
+                    <p>Changes are typically replicated within seconds to 1 minute depending on your merge task schedule. Wait approximately 60 seconds before verifying in Snowflake.</p>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>How the connector handles DELETE operations</strong>
+                    <p>The Openflow PostgreSQL connector uses <strong>soft deletes</strong> &mdash; deleted rows are <strong>never physically removed</strong> from Snowflake. Instead, the connector sets the metadata column <code>_SNOWFLAKE_DELETED = TRUE</code> on the row. Every replicated row also includes <code>_SNOWFLAKE_INSERTED_AT</code> and <code>_SNOWFLAKE_UPDATED_AT</code> metadata columns. This is expected and correct behavior that preserves full change history.</p>
+                </div>
+            </div>
+
+            <h3>Verify Changes in Snowflake</h3>
+            <p>Switch to your <strong>Snowflake worksheet</strong> and verify:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Verify INSERT: New customers (exclude soft-deleted rows)
+SELECT COUNT(*) AS total_active_customers
+FROM ECOMMERCE_CDC."ecommerce"."customers"
+WHERE "_SNOWFLAKE_DELETED" = FALSE;
+
+-- Verify the new customers
+SELECT "customer_id", "first_name", "last_name", "city"
+FROM ECOMMERCE_CDC."ecommerce"."customers"
+WHERE "customer_id" > 10;
+
+-- Verify UPDATE: Check order status changes
+SELECT "order_id", "status" FROM ECOMMERCE_CDC."ecommerce"."orders"
+WHERE "order_id" IN (7, 10);
+
+-- Verify UPDATE: Check Alice's updated email
+SELECT "first_name", "last_name", "email" FROM ECOMMERCE_CDC."ecommerce"."customers"
+WHERE "customer_id" = 1;
+
+-- Verify UPDATE: Check product stock quantities
+SELECT "product_name", "stock_quantity" FROM ECOMMERCE_CDC."ecommerce"."products"
+WHERE "product_id" IN (2, 5);
+
+-- Verify DELETE: Order 11 is soft-deleted (_SNOWFLAKE_DELETED = TRUE)
+SELECT "order_id", "_SNOWFLAKE_DELETED", "_SNOWFLAKE_UPDATED_AT"
+FROM ECOMMERCE_CDC."ecommerce"."orders"
+WHERE "order_id" = 11;
+
+-- Count only active (non-deleted) orders
+SELECT COUNT(*) AS active_orders
+FROM ECOMMERCE_CDC."ecommerce"."orders"
+WHERE "_SNOWFLAKE_DELETED" = FALSE;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Results</div>
+                <pre><code>-- Total active customers: 13
+TOTAL_ACTIVE_CUSTOMERS: 13
+
+-- New customers visible:
+CUSTOMER_ID | FIRST_NAME | LAST_NAME | CITY
+11          | Kevin      | Hart      | Philadelphia
+12          | Laura      | Chen      | San Francisco
+13          | Marcus     | Williams  | Miami
+
+-- Order statuses updated:
+ORDER_ID | STATUS
+7        | shipped
+10       | completed
+
+-- Alice's email updated:
+alice.smith@newemail.com
+
+-- Product stock updated:
+Mechanical Keyboard | 74
+Dumbbell Set        | 78
+
+-- Order 11 is soft-deleted (row still exists):
+ORDER_ID | _SNOWFLAKE_DELETED | _SNOWFLAKE_UPDATED_AT
+11       | TRUE               | 2025-xx-xx xx:xx:xx
+
+-- Active orders: 12
+ACTIVE_ORDERS: 12</code></pre>
+            </div>
+
+            <div class="callout success">
+                <span class="callout-icon">&#10004;</span>
+                <div class="callout-content">
+                    <strong>CDC is Working!</strong>
+                    <p>All three CDC operations (INSERT, UPDATE, DELETE) are being captured and replicated from Snowflake Postgres to Snowflake in real-time.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="step10.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">10. Verify Initial Snapshot</span></span></a>
+                <a href="step12.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">12. Analytics in Snowflake</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

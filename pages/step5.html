@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 5: Enable Logical Replication</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html" class="active">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">5</div>
+            <h1>Enable Logical Replication for CDC</h1>
+            <p>Configure PostgreSQL WAL and create a publication for Change Data Capture.</p>
+        </div>
+
+        <div class="content">
+            <p>PostgreSQL CDC requires <strong>logical replication</strong> to be enabled. We need to verify the WAL level and create a publication for the tables we want to replicate.</p>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Snowflake Postgres Default</strong>
+                    <p>Snowflake Postgres instances come with <code>wal_level = logical</code> already enabled. You can verify this but do not need to change it.</p>
+                </div>
+            </div>
+
+            <h3>Verify WAL Level</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Verify logical replication is enabled
+SHOW wal_level;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code> wal_level
+-----------
+ logical</code></pre>
+            </div>
+
+            <h3>Create a Publication for CDC</h3>
+            <p>A publication defines which tables should be tracked for changes:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Create a publication for all ecommerce tables
+CREATE PUBLICATION ecommerce_cdc_publication
+  FOR TABLE
+    ecommerce.customers,
+    ecommerce.products,
+    ecommerce.orders;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code>CREATE PUBLICATION</code></pre>
+            </div>
+
+            <h3>Verify the Publication</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- List all publications
+SELECT * FROM pg_publication;
+
+-- List tables in our publication
+SELECT * FROM pg_publication_tables
+WHERE pubname = 'ecommerce_cdc_publication';</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code>         pubname              | pubowner | puballtables | pubinsert | pubupdate | pubdelete
+------------------------------+----------+--------------+-----------+-----------+-----------
+ ecommerce_cdc_publication   |       10 | f            | t         | t         | t
+
+       pubname               | schemaname | tablename
+-----------------------------+------------+-----------
+ ecommerce_cdc_publication   | ecommerce  | customers
+ ecommerce_cdc_publication   | ecommerce  | products
+ ecommerce_cdc_publication   | ecommerce  | orders</code></pre>
+            </div>
+
+            <h3>Verify Replica Identity</h3>
+            <p>For tables with primary keys, the connector requires <code>REPLICA IDENTITY DEFAULT</code> (the PostgreSQL default). Verify your tables are correctly set:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Verify replica identity is DEFAULT for all tables (required by Openflow connector)
+SELECT relname AS table_name,
+       CASE relreplident
+           WHEN 'd' THEN 'DEFAULT'
+           WHEN 'n' THEN 'NOTHING'
+           WHEN 'f' THEN 'FULL'
+           WHEN 'i' THEN 'USING INDEX'
+       END AS replica_identity
+FROM pg_class
+WHERE relname IN ('customers', 'products', 'orders');</code></pre>
+            </div>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>Do NOT set REPLICA IDENTITY FULL for tables with primary keys</strong>
+                    <p>The Openflow PostgreSQL connector requires <code>REPLICA IDENTITY DEFAULT</code> for tables with primary keys. Setting it to <code>FULL</code> will cause the connector to fail with <code>MISSING_PRIMARY_KEYS</code> and permanently stop replication for those tables. <code>DEFAULT</code> is already the PostgreSQL default — no change is needed if you have not altered it.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="step4.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">4. Validate Queries</span></span></a>
+                <a href="step6.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">6. Set Up Openflow Runtime</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

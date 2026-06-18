@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 4: Validate Queries</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html" class="active">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">4</div>
+            <h1>Validate Postgres Data with Queries</h1>
+            <p>Run queries to verify data is correctly populated before setting up CDC.</p>
+        </div>
+
+        <div class="content">
+            <h3>Query 1: Order Summary with Customer and Product Details</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>SELECT
+    o.order_id,
+    o.order_date,
+    c.first_name || ' ' || c.last_name AS customer_name,
+    p.product_name,
+    p.price,
+    o.quantity,
+    (p.price * o.quantity) AS total_cost,
+    o.status
+FROM ecommerce.orders o
+JOIN ecommerce.customers c ON o.customer_id = c.customer_id
+JOIN ecommerce.products p ON o.product_id = p.product_id
+ORDER BY o.order_date;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code> order_id | order_date |  customer_name  |      product_name       | price  | quantity | total_cost |  status
+----------+------------+-----------------+-------------------------+--------+----------+------------+-----------
+        1 | 2025-01-15 | Alice Smith     | Wireless Mouse          |  25.99 |        1 |      25.99 | completed
+        2 | 2025-01-16 | Bob Johnson     | Gaming Monitor          | 300.00 |        1 |     300.00 | completed
+        3 | 2025-01-17 | Alice Smith     | Novel: The Great Gatsby |  12.50 |        2 |      25.00 | completed
+        4 | 2025-01-18 | Charlie Brown   | Mechanical Keyboard     | 120.50 |        1 |     120.50 | shipped
+...
+(10 rows)</code></pre>
+            </div>
+
+            <h3>Query 2: Top Customers by Spending</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>SELECT
+    c.first_name,
+    c.last_name,
+    COUNT(o.order_id) AS number_of_orders,
+    SUM(p.price * o.quantity) AS total_spent
+FROM ecommerce.customers c
+JOIN ecommerce.orders o ON c.customer_id = o.customer_id
+JOIN ecommerce.products p ON o.product_id = p.product_id
+GROUP BY c.first_name, c.last_name
+ORDER BY total_spent DESC
+LIMIT 5;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code> first_name | last_name | number_of_orders | total_spent
+------------+-----------+------------------+-------------
+ Bob        | Johnson   |                2 |      420.50
+ Hannah     | Montana   |                1 |      150.00
+ Charlie    | Brown     |                1 |      120.50
+ Diana      | Prince    |                1 |       89.99
+ Fiona      | Gallagher |                1 |       60.00</code></pre>
+            </div>
+
+            <h3>Query 3: Revenue by Category</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>SELECT
+    p.category,
+    SUM(o.quantity) AS items_sold,
+    SUM(p.price * o.quantity) AS revenue
+FROM ecommerce.orders o
+JOIN ecommerce.products p ON o.product_id = p.product_id
+GROUP BY p.category
+ORDER BY revenue DESC;</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code>  category   | items_sold | revenue
+-------------+------------+---------
+ Electronics |          4 |  567.49
+ Apparel     |          1 |  150.00
+ Footwear    |          1 |   89.99
+ Fitness     |          3 |   60.00
+ Kitchen     |          1 |   45.00
+ Books       |          3 |   37.50</code></pre>
+            </div>
+
+            <div class="callout success">
+                <span class="callout-icon">&#10004;</span>
+                <div class="callout-content">
+                    <strong>Part 1 Complete!</strong>
+                    <p>Your Snowflake Postgres instance is running with sample data. Next, we'll configure CDC to stream these changes to Snowflake.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="step3.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">3. Create Tables & Data</span></span></a>
+                <a href="step5.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">5. Enable Logical Replication</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

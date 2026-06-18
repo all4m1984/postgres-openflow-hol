@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 3: Create Tables & Data</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html" class="active">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">3</div>
+            <h1>Create Tables and Insert Sample Data</h1>
+            <p>Build an e-commerce schema with customers, products, and orders tables.</p>
+        </div>
+
+        <div class="content">
+            <h3>Create the Schema and Tables</h3>
+            <p>We'll create a dedicated <code>ecommerce</code> schema representing a typical OLTP workload.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Create a dedicated schema for our e-commerce data
+CREATE SCHEMA IF NOT EXISTS ecommerce;
+SET search_path TO ecommerce;
+
+-- Create customers table
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    email VARCHAR(100),
+    city VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create products table
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    product_name VARCHAR(100),
+    category VARCHAR(50),
+    price DECIMAL(10, 2),
+    stock_quantity INT DEFAULT 0
+);
+
+-- Create orders table with foreign keys
+CREATE TABLE orders (
+    order_id SERIAL PRIMARY KEY,
+    order_date DATE DEFAULT CURRENT_DATE,
+    customer_id INT,
+    product_id INT,
+    quantity INT,
+    status VARCHAR(20) DEFAULT 'pending',
+
+    CONSTRAINT fk_order_customer
+        FOREIGN KEY (customer_id)
+        REFERENCES customers(customer_id),
+
+    CONSTRAINT fk_order_product
+        FOREIGN KEY (product_id)
+        REFERENCES products(product_id)
+);</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code>CREATE SCHEMA
+SET
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE</code></pre>
+            </div>
+
+            <h3>Insert Sample Data</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Insert 10 Customers
+INSERT INTO customers (first_name, last_name, email, city) VALUES
+('Alice', 'Smith', 'alice@example.com', 'New York'),
+('Bob', 'Johnson', 'bob@test.com', 'Los Angeles'),
+('Charlie', 'Brown', 'charlie@sample.net', 'Chicago'),
+('Diana', 'Prince', 'diana@themyscira.com', 'Houston'),
+('Evan', 'Wright', 'evan@write.com', 'Phoenix'),
+('Fiona', 'Gallagher', 'fiona@shameless.com', 'Chicago'),
+('George', 'Martin', 'grrm@books.com', 'Santa Fe'),
+('Hannah', 'Montana', 'hannah@music.com', 'Los Angeles'),
+('Ian', 'Malcolm', 'ian@chaos.com', 'Austin'),
+('Julia', 'Roberts', 'julia@movie.com', 'New York');
+
+-- Insert 10 Products
+INSERT INTO products (product_name, category, price, stock_quantity) VALUES
+('Wireless Mouse', 'Electronics', 25.99, 150),
+('Mechanical Keyboard', 'Electronics', 120.50, 75),
+('Gaming Monitor', 'Electronics', 300.00, 30),
+('Yoga Mat', 'Fitness', 20.00, 200),
+('Dumbbell Set', 'Fitness', 55.00, 80),
+('Running Shoes', 'Footwear', 89.99, 120),
+('Leather Jacket', 'Apparel', 150.00, 45),
+('Coffee Maker', 'Kitchen', 45.00, 90),
+('Blender', 'Kitchen', 30.00, 110),
+('Novel: The Great Gatsby', 'Books', 12.50, 300);
+
+-- Insert 10 Orders
+INSERT INTO orders (order_date, customer_id, product_id, quantity, status) VALUES
+('2025-01-15', 1, 1, 1, 'completed'),
+('2025-01-16', 2, 3, 1, 'completed'),
+('2025-01-17', 1, 10, 2, 'completed'),
+('2025-01-18', 3, 2, 1, 'shipped'),
+('2025-01-19', 4, 6, 1, 'shipped'),
+('2025-01-20', 5, 8, 1, 'completed'),
+('2025-01-21', 2, 2, 1, 'processing'),
+('2025-01-22', 6, 4, 3, 'completed'),
+('2025-01-23', 7, 10, 1, 'shipped'),
+('2025-01-24', 8, 7, 1, 'pending');</code></pre>
+            </div>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Result</div>
+                <pre><code>INSERT 0 10
+INSERT 0 10
+INSERT 0 10</code></pre>
+            </div>
+
+            <div class="page-nav">
+                <a href="step2.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">2. Connect to Postgres</span></span></a>
+                <a href="step4.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">4. Validate Queries</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

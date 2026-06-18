@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hands-On Lab: Snowflake Postgres + Openflow CDC Pipeline</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="index.html" class="active">Overview</a>
+
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="pages/step1.html">1. Deploy Postgres Instance</a>
+            <a href="pages/step2.html">2. Connect to Postgres</a>
+            <a href="pages/step3.html">3. Create Tables & Data</a>
+            <a href="pages/step4.html">4. Validate Queries</a>
+
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="pages/step5.html">5. Enable Logical Replication</a>
+            <a href="pages/step6.html">6. Set Up Openflow Runtime</a>
+            <a href="pages/step7.html">7. Deploy CDC Connector</a>
+            <a href="pages/step8.html">8. Configure CDC Parameters</a>
+            <a href="pages/step9.html">9. Start the CDC Pipeline</a>
+
+            <div class="nav-section">Part 3: Verify & Explore</div>
+            <a href="pages/step10.html">10. Verify Initial Snapshot</a>
+            <a href="pages/step11.html">11. Test Real-Time CDC</a>
+            <a href="pages/step12.html">12. Analytics in Snowflake</a>
+
+            <div class="nav-section">Wrap Up</div>
+            <a href="pages/cleanup.html">Cleanup & Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <section class="hero">
+            <h1>Snowflake Postgres + Openflow CDC Pipeline</h1>
+            <p>Build an end-to-end real-time Change Data Capture (CDC) pipeline from Snowflake Postgres to Snowflake using Openflow.</p>
+            <div class="badge-row">
+                <span class="badge">Snowflake Postgres</span>
+                <span class="badge">Openflow</span>
+                <span class="badge">CDC Pipeline</span>
+                <span class="badge">Real-Time Ingestion</span>
+            </div>
+        </section>
+
+        <div class="content">
+            <h2>Overview</h2>
+            <p>In this hands-on lab, you will build a complete data pipeline that demonstrates how <strong>Snowflake Postgres</strong> (a fully-managed PostgreSQL service) integrates with Snowflake's <strong>Openflow CDC connector</strong> to stream data changes in real-time to Snowflake tables.</p>
+
+            <h3>What You'll Learn</h3>
+            <ul>
+                <li>How to deploy and connect to a Snowflake Postgres instance</li>
+                <li>How to create tables and populate data in Snowflake Postgres</li>
+                <li>How to configure PostgreSQL logical replication for CDC</li>
+                <li>How to set up and configure the Openflow PostgreSQL CDC connector</li>
+                <li>How to verify real-time data synchronization from Postgres to Snowflake</li>
+                <li>How to run analytics on the replicated data in Snowflake</li>
+            </ul>
+
+            <h3>What You'll Build</h3>
+            <div class="architecture-diagram">
+                <p style="font-weight: 600; margin-bottom: 14px; color: var(--sf-navy);">End-to-End Architecture</p>
+                <div class="arch-flow">
+                    <div class="arch-box source">Snowflake Postgres<br><small>(Source - OLTP)</small></div>
+                    <span class="arch-arrow">&#10132;</span>
+                    <div class="arch-box pipeline">Openflow CDC<br><small>(Pipeline)</small></div>
+                    <span class="arch-arrow">&#10132;</span>
+                    <div class="arch-box destination">Snowflake Tables<br><small>(Destination - OLAP)</small></div>
+                </div>
+            </div>
+
+            <h3>Prerequisites</h3>
+            <table>
+                <thead>
+                    <tr><th>Requirement</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>Snowflake Account</strong></td><td>Enterprise edition or higher with <code>ACCOUNTADMIN</code> role</td></tr>
+                    <tr><td><strong>Snowflake Postgres</strong></td><td>Feature enabled on your account</td></tr>
+                    <tr><td><strong>Openflow Access</strong></td><td>Feature enabled on your account</td></tr>
+                    <tr><td><strong>Postgres Client</strong></td><td><code>psql</code> CLI or GUI (DBeaver, pgAdmin, DataGrip)</td></tr>
+                    <tr><td><strong>Snowflake Role</strong></td><td><code>CREATE POSTGRES INSTANCE</code> and <code>CREATE NETWORK POLICY</code> privileges</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Installing psql</strong>
+                    <p>Mac: <code>brew install postgresql@17</code> | Windows: <a href="https://www.postgresql.org/download/windows/" target="_blank">PostgreSQL Windows Installer</a> | Docker: <code>docker pull postgres:17</code></p>
+                </div>
+            </div>
+
+            <h3>Lab Duration</h3>
+            <p>This lab takes approximately <strong>75 minutes</strong> to complete and is divided into 12 steps across 3 parts.</p>
+
+            <div class="page-nav">
+                <span></span>
+                <a href="pages/step1.html" class="next">
+                    <span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">1. Deploy Postgres Instance</span></span>
+                </a>
+            </div>
+        </div>
+
+        <footer class="footer">
+            Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

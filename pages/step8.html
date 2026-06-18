@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 8: Configure CDC Parameters</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html" class="active">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="step-badge">8</div>
+            <h1>Configure CDC Connector Parameters</h1>
+            <p>Set up Source, Destination, and Ingestion parameters for the Openflow connector.</p>
+        </div>
+
+        <div class="content">
+            <p>After the connector is deployed, configure three parameter groups by right-clicking the PostgreSQL process group on the canvas and selecting <strong>Parameters</strong>.</p>
+
+            <h2>Step 8.1: Upload JDBC Driver</h2>
+            <p>The JDBC driver must be uploaded <strong>before</strong> applying parameters. It is attached directly inside the Source Parameters:</p>
+            <ol>
+                <li>Download the PostgreSQL JDBC driver from <a href="https://jdbc.postgresql.org/download/" target="_blank">jdbc.postgresql.org</a> (version 42.7.x or later)</li>
+                <li>Right-click the PostgreSQL process group &rarr; <strong>Parameters</strong> &rarr; <strong>Source Parameters</strong></li>
+                <li>Find the <strong>PostgreSQL JDBC Driver</strong> parameter</li>
+                <li>Check the <strong>Reference asset</strong> checkbox next to the field</li>
+                <li>Upload the <code>postgresql-42.7.x.jar</code> file using the file picker that appears</li>
+            </ol>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>No separate Assets menu</strong>
+                    <p>There is no standalone Assets menu. The JDBC driver is attached directly to the <strong>PostgreSQL JDBC Driver</strong> parameter by enabling the <strong>Reference asset</strong> checkbox within the parameter field itself.</p>
+                </div>
+            </div>
+
+            <h2>Step 8.2: Source Parameters (PostgreSQL Connection)</h2>
+
+            <table>
+                <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>PostgreSQL Connection URL</td><td><code>jdbc:postgresql://YOUR_INSTANCE_HOST.YOUR-ACCOUNT.YOUR-REGION.aws.postgres.snowflake.app:5432/postgres</code></td></tr>
+                    <tr><td>PostgreSQL Username</td><td><code>snowflake_admin</code></td></tr>
+                    <tr><td>PostgreSQL Password</td><td>Your Postgres instance password</td></tr>
+                    <tr><td>Publication Name</td><td><code>ecommerce_cdc_publication</code></td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>JDBC URL format</strong>
+                    <p>The URL must start with <code>jdbc:postgresql://</code> (not <code>postgresql://</code>). Get the hostname from <code>SHOW POSTGRES INSTANCES;</code> in Snowflake. Ensure no trailing spaces.</p>
+                </div>
+            </div>
+
+            <h2>Step 8.3: Destination Parameters (Snowflake)</h2>
+            <table>
+                <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Destination Database</td><td><code>ECOMMERCE_CDC</code></td></tr>
+                    <tr><td>Destination Schema Pattern</td><td><code>${source.schema.name}</code></td></tr>
+                    <tr><td>Snowflake Role</td><td><code>OPENFLOW_RUNTIME_ROLE</code></td></tr>
+                    <tr><td>Snowflake Warehouse</td><td><code>OPENFLOW_WH</code></td></tr>
+                    <tr><td>Snowflake Authentication Strategy</td><td><code>SNOWFLAKE_MANAGED_TOKEN</code></td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>Critical: all four destination fields are required</strong>
+                    <ul>
+                        <li><strong>Destination Schema Pattern</strong> is required — without it, the connector has nowhere to write schemas and no data will appear in Snowflake</li>
+                        <li><strong>Snowflake Role</strong> must be <code>OPENFLOW_RUNTIME_ROLE</code>, not <code>ACCOUNTADMIN</code> — ACCOUNTADMIN is explicitly blocked by Openflow and causes a <em>"role name is invalid"</em> error</li>
+                        <li><strong>Snowflake Authentication Strategy</strong> must be <code>SNOWFLAKE_MANAGED_TOKEN</code> for Snowflake Deployments (SPCS)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Step 8.4: Ingestion Parameters</h2>
+            <table>
+                <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td>Ingestion Type</td><td><code>full</code></td><td>Full snapshot first, then incremental CDC. <strong>Required — do not remove.</strong></td></tr>
+                    <tr><td>Included Table Names</td><td><code>ecommerce.customers, ecommerce.products, ecommerce.orders</code></td><td>Explicit list of tables to replicate (schema.table format)</td></tr>
+                    <tr><td>Merge Task Schedule CRON</td><td><code>* * * * * ?</code></td><td>Continuous merge so data appears in Snowflake immediately</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Why data may not appear in Snowflake immediately</strong>
+                    <p>The connector uses a two-phase process: data is first streamed into <strong>journal tables</strong> (e.g., <code>customers_JOURNAL_xxx_1</code>), then the <strong>merge task</strong> (triggered by the CRON) merges it into the final <strong>destination tables</strong>. Using <code>* * * * * ?</code> triggers continuous merging so data appears within seconds. After the merge, query tables in <code>ECOMMERCE_CDC."ecommerce"</code> using double-quoted identifiers: <code>SELECT * FROM ECOMMERCE_CDC."ecommerce"."customers";</code></p>
+                </div>
+            </div>
+
+            <h2>Step 8.5: Apply and Start</h2>
+            <ol>
+                <li>Click <strong>Apply</strong> to save all parameter configurations</li>
+                <li>Right-click on the canvas (outside the process group) and select <strong>Enable all Controller Services</strong></li>
+                <li>Wait until every service shows <strong>ENABLED</strong> status before proceeding</li>
+                <li>Right-click the PostgreSQL process group &rarr; <strong>Start</strong></li>
+            </ol>
+
+            <div class="expected-result">
+                <div class="expected-result-header">&#9989; Expected Healthy State</div>
+                <p>A healthy running connector shows:</p>
+                <ul>
+                    <li><strong>Snapshot Load</strong>: all processors running, <strong>Read/write shows KB of data</strong>, 0 warnings, 0 invalid</li>
+                    <li><strong>Incremental Load</strong>: all processors running, 0 invalid</li>
+                    <li><strong>Metrics</strong> and <strong>Stream Staleness Prevention</strong>: running</li>
+                    <li>No bulletin errors</li>
+                </ul>
+            </div>
+
+            <h2>Step 8.6: Confirm Initial Load Complete</h2>
+            <p>To confirm the snapshot has finished and the connector switched to incremental mode:</p>
+            <ol>
+                <li>Right-click PostgreSQL process group &rarr; <strong>Controller Services</strong></li>
+                <li>Find <strong>Table State Store</strong> &rarr; click <strong>&#8942;</strong> &rarr; <strong>View State</strong></li>
+                <li>All 3 tables should show <strong><code>INCREMENTAL_REPLICATION</code></strong></li>
+            </ol>
+
+            <table>
+                <thead><tr><th>State</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>NEW</code></td><td>Table scheduled but snapshot not started yet</td></tr>
+                    <tr><td><code>SNAPSHOT_REPLICATION</code></td><td>Initial snapshot in progress</td></tr>
+                    <tr><td><code>INCREMENTAL_REPLICATION</code></td><td>Snapshot complete, streaming live changes ✅</td></tr>
+                    <tr><td><code>FAILED</code></td><td>Permanent failure — see troubleshooting below</td></tr>
+                </tbody>
+            </table>
+
+            <h2>Troubleshooting</h2>
+
+            <h3>FAILED, MISSING_PRIMARY_KEYS in Table State Store</h3>
+            <p>Caused by setting <code>REPLICA IDENTITY FULL</code> on tables that have primary keys. The connector requires <code>REPLICA IDENTITY DEFAULT</code> for primary key tables.</p>
+            <p><strong>Fix in PostgreSQL:</strong></p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>ALTER TABLE ecommerce.customers REPLICA IDENTITY DEFAULT;
+ALTER TABLE ecommerce.products REPLICA IDENTITY DEFAULT;
+ALTER TABLE ecommerce.orders REPLICA IDENTITY DEFAULT;</code></pre>
+            </div>
+            <p>Then in Openflow: <strong>Stop</strong> the connector &rarr; Controller Services &rarr; Table State Store &rarr; <strong>Clear state</strong> &rarr; <strong>Start</strong>.</p>
+
+            <h3>&#10006;1 Invalid Processor in Stream Staleness Prevention</h3>
+            <p>The deprecated <code>Fetch Journal Streams</code> processor (in the yellow "Deprecated, drain only mode" box) becomes invalid because its PostgreSQL controller service was never configured. Since it has nothing queued, safely disable it:</p>
+            <ol>
+                <li>Double-click PostgreSQL &rarr; double-click <strong>Stream Staleness Prevention</strong></li>
+                <li>Right-click <strong>Fetch Journal Streams</strong> &rarr; <strong>Disable</strong></li>
+                <li>Return to parent canvas and restart the connector</li>
+            </ol>
+
+            <h3>Connector running but 0 bytes / no data in Snowflake</h3>
+            <p>Check in order:</p>
+            <ol>
+                <li><strong>Ingestion Parameters</strong>: confirm <code>Ingestion Type = full</code> and <code>Included Table Names</code> are set — removing either causes silent 0-byte operation</li>
+                <li><strong>Destination Schema Pattern</strong>: must be set to <code>${source.schema.name}</code></li>
+                <li><strong>Table State Store</strong>: check for <code>FAILED</code> tables and clear state if found</li>
+                <li><strong>Controller Services</strong>: ensure all show <strong>ENABLED</strong> before starting</li>
+            </ol>
+
+            <h3>Restart after any configuration change</h3>
+            <ol>
+                <li>Right-click process group &rarr; <strong>Stop</strong></li>
+                <li>Right-click process group &rarr; <strong>Parameters</strong> &rarr; fix values &rarr; <strong>Apply</strong></li>
+                <li>Right-click canvas &rarr; <strong>Enable all Controller Services</strong></li>
+                <li>Right-click process group &rarr; <strong>Start</strong></li>
+            </ol>
+
+            <div class="page-nav">
+                <a href="step7.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">7. Deploy CDC Connector</span></span></a>
+                <a href="step9.html" class="next"><span><span class="nav-label">Next Step &rarr;</span><span class="nav-title">9. Start the CDC Pipeline</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>

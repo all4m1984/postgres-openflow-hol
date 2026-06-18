@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleanup & Resources</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Hands-On Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html" class="active">Cleanup &amp; Resources</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Cleanup & Resources</h1>
+            <p>Clean up lab resources and explore further learning materials.</p>
+        </div>
+
+        <div class="content">
+            <h2>Cleanup (Optional)</h2>
+            <p>When you're done with the lab, clean up resources to avoid ongoing costs.</p>
+
+            <h3>1. Stop the Openflow Connector</h3>
+            <ol>
+                <li>Navigate to <strong>Data &rarr; Openflow</strong> in Snowsight</li>
+                <li>Select your PostgreSQL connector</li>
+                <li>Click <strong>Stop</strong> to halt the CDC pipeline</li>
+            </ol>
+
+            <h3>2. Clean Up Snowflake Resources</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Clean up Snowflake resources
+USE ROLE ACCOUNTADMIN;
+
+-- Drop the CDC destination database
+DROP DATABASE IF EXISTS ECOMMERCE_CDC;
+
+-- Drop the warehouse
+DROP WAREHOUSE IF EXISTS OPENFLOW_WH;</code></pre>
+            </div>
+
+            <h3>3. Clean Up PostgreSQL Resources</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (PostgreSQL)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Drop the publication
+DROP PUBLICATION IF EXISTS ecommerce_cdc_publication;
+
+-- Drop the schema and all tables
+DROP SCHEMA IF EXISTS ecommerce CASCADE;</code></pre>
+            </div>
+
+            <h3>4. Drop the Postgres Instance</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">SQL (Snowflake)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">&#128203; Copy</button>
+                </div>
+                <pre><code>-- Drop the Postgres instance
+USE ROLE ACCOUNTADMIN;
+DROP POSTGRES INSTANCE IF EXISTS openflow_lab;</code></pre>
+            </div>
+
+            <h2>What You Accomplished</h2>
+            <ul>
+                <li>Deployed a fully-managed Snowflake Postgres instance</li>
+                <li>Created an e-commerce schema with relational tables</li>
+                <li>Configured PostgreSQL logical replication for CDC</li>
+                <li>Deployed and configured the Openflow PostgreSQL CDC connector</li>
+                <li>Verified real-time data replication (INSERT, UPDATE, DELETE)</li>
+                <li>Ran analytical queries on the replicated data in Snowflake</li>
+            </ul>
+
+            <h2>Key Takeaways</h2>
+            <ul>
+                <li><strong>Snowflake Postgres</strong> provides a fully-managed PostgreSQL service ideal for transactional workloads</li>
+                <li><strong>Openflow CDC</strong> enables real-time data replication with minimal configuration</li>
+                <li>Together, they enable: <strong>OLTP in Postgres + OLAP in Snowflake</strong></li>
+                <li>CDC captures all DML operations (INSERT, UPDATE, DELETE) with near-zero latency</li>
+            </ul>
+
+            <h2>Further Reading</h2>
+            <table>
+                <thead><tr><th>Resource</th><th>Link</th></tr></thead>
+                <tbody>
+                    <tr><td>Snowflake Postgres Documentation</td><td><a href="https://docs.snowflake.com/en/user-guide/snowflake-postgres/about" target="_blank">docs.snowflake.com</a></td></tr>
+                    <tr><td>Openflow Documentation</td><td><a href="https://docs.snowflake.com/en/user-guide/data-integration/openflow" target="_blank">docs.snowflake.com</a></td></tr>
+                    <tr><td>PostgreSQL CDC Setup</td><td><a href="https://docs.snowflake.com/en/user-guide/data-integration/openflow/connectors/postgres/setup" target="_blank">docs.snowflake.com</a></td></tr>
+                    <tr><td>Getting Started with Snowflake Postgres</td><td><a href="https://www.snowflake.com/en/developers/guides/getting-started-with-snowflake-postgres/" target="_blank">snowflake.com</a></td></tr>
+                    <tr><td>Getting Started with PostgreSQL CDC</td><td><a href="https://www.snowflake.com/en/developers/guides/getting-started-with-openflow-postgresql-cdc/" target="_blank">snowflake.com</a></td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout success">
+                <span class="callout-icon">&#10004;</span>
+                <div class="callout-content">
+                    <strong>Congratulations!</strong>
+                    <p>You have successfully completed the Snowflake Postgres + Openflow CDC Pipeline hands-on lab.</p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="step12.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">12. Analytics in Snowflake</span></span></a>
+                <a href="../index.html" class="next"><span><span class="nav-label">Back to &rarr;</span><span class="nav-title">Overview</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Snowflake Hands-On Lab &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; &copy; 2025 Snowflake Inc.</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>
