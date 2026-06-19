@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appendix: Openflow & NiFi Glossary</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .glossary-section { margin: 36px 0 0; }
+        .term-card {
+            border: 1px solid var(--sf-gray-light);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            background: var(--sf-white);
+        }
+        .term-card:hover { border-color: var(--sf-blue); }
+        .term-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--sf-navy);
+            margin-bottom: 6px;
+        }
+        .term-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+        }
+        .tag-openflow { background: #E8F7FC; color: #1A6B8A; }
+        .tag-nifi     { background: #EBF4FF; color: #2B6CB0; }
+        .tag-cdc      { background: #F0FFF4; color: #276749; }
+        .term-desc { color: var(--sf-gray); font-size: 14px; line-height: 1.7; margin: 0; }
+        .symbol-table td:first-child { font-size: 18px; text-align: center; width: 48px; }
+        .symbol-table td:nth-child(2) { font-weight: 600; color: var(--sf-navy); width: 140px; }
+        .toc { columns: 2; column-gap: 32px; margin: 16px 0 32px; padding: 20px 24px; background: var(--sf-gray-lighter); border-radius: 8px; }
+        .toc a { color: var(--sf-blue-dark); text-decoration: none; font-size: 13px; display: block; margin-bottom: 4px; }
+        .toc a:hover { text-decoration: underline; }
+        @media (max-width: 600px) { .toc { columns: 1; } }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo"><div class="sf-brand"><svg class="sf-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="5" x2="50" y2="95" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="5" y1="50" x2="95" y2="50" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="19" y1="19" x2="81" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><line x1="81" y1="19" x2="19" y2="81" stroke="#29B5E8" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="5" r="6" fill="#29B5E8"/><circle cx="50" cy="95" r="6" fill="#29B5E8"/><circle cx="5" cy="50" r="6" fill="#29B5E8"/><circle cx="95" cy="50" r="6" fill="#29B5E8"/><circle cx="19" cy="19" r="6" fill="#29B5E8"/><circle cx="81" cy="81" r="6" fill="#29B5E8"/><circle cx="81" cy="19" r="6" fill="#29B5E8"/><circle cx="19" cy="81" r="6" fill="#29B5E8"/></svg><h2>snowflake</h2></div><h3>Community Lab Guide</h3></div>
+        <nav>
+            <div class="nav-section">Getting Started</div>
+            <a href="../index.html">Overview</a>
+            <div class="nav-section">Part 1: Snowflake Postgres</div>
+            <a href="step1.html">1. Deploy Postgres Instance</a>
+            <a href="step2.html">2. Connect to Postgres</a>
+            <a href="step3.html">3. Create Tables &amp; Data</a>
+            <a href="step4.html">4. Validate Queries</a>
+            <div class="nav-section">Part 2: Configure CDC</div>
+            <a href="step5.html">5. Enable Logical Replication</a>
+            <a href="step6.html">6. Set Up Openflow Runtime</a>
+            <a href="step7.html">7. Deploy CDC Connector</a>
+            <a href="step8.html">8. Configure CDC Parameters</a>
+            <a href="step9.html">9. Start the CDC Pipeline</a>
+            <div class="nav-section">Part 3: Verify &amp; Explore</div>
+            <a href="step10.html">10. Verify Initial Snapshot</a>
+            <a href="step11.html">11. Test Real-Time CDC</a>
+            <a href="step12.html">12. Analytics in Snowflake</a>
+            <div class="nav-section">Wrap Up</div>
+            <a href="cleanup.html">Cleanup &amp; Resources</a>
+            <div class="nav-section">Reference</div>
+            <a href="appendix.html" class="active">Appendix: Glossary</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Appendix: Openflow &amp; NiFi Glossary</h1>
+            <p>Key terms and concepts used throughout this lab, explained for first-time Openflow and NiFi users.</p>
+        </div>
+
+        <div class="content">
+
+            <div class="toc">
+                <a href="#openflow-terms">Openflow Terms</a>
+                <a href="#nifi-terms">NiFi / Canvas Terms</a>
+                <a href="#parameters">Parameter Groups</a>
+                <a href="#cdc-terms">CDC &amp; Replication Terms</a>
+                <a href="#ui-symbols">UI Symbols &amp; Indicators</a>
+                <a href="#table-states">Table Replication States</a>
+            </div>
+
+            <!-- ── OPENFLOW TERMS ─────────────────────────────── -->
+            <h2 id="openflow-terms">Openflow Terms</h2>
+
+            <div class="term-card">
+                <div class="term-name">Openflow <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">Snowflake's managed data integration product built on Apache NiFi. It lets you move data between external sources (databases, SaaS apps, streams) and Snowflake without writing custom code. Openflow manages the infrastructure; you configure connectors through a visual UI.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Deployment <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">The <strong>control plane</strong> of Openflow. A Deployment is the top-level Openflow infrastructure that you create once per account. It manages authentication, routing, and the overall environment. Think of it as the "server" that hosts your runtimes. In this lab we use a <strong>Snowflake Deployment</strong>, which runs on Snowpark Container Services (SPCS) inside your Snowflake account. The alternative is BYOC (Bring Your Own Cloud), which runs in your own AWS account.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Runtime <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">The <strong>execution environment</strong> within a Deployment. A Runtime is a containerized NiFi instance (running on SPCS) where connectors and flows actually execute. Each Runtime has a size (Small, Medium, Large), a dedicated Snowflake Role, and External Access Integrations defining which external hosts it can reach. You can have multiple Runtimes per Deployment — one per connector is the recommended practice.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Connector <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">A pre-built, Snowflake-supported data pipeline for a specific source (e.g., PostgreSQL, MySQL, Salesforce). A connector is packaged as a NiFi flow and deployed into a Runtime from the Openflow connectors catalog. Once deployed, it appears on the canvas as a process group that you configure via Parameters.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Data Plane Integration <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">A Snowflake account-level object that authorizes Openflow to create and manage infrastructure (compute pools, container services) in your account. Created automatically when you create a Snowflake Deployment. Requires the <code>CREATE OPENFLOW DATA PLANE INTEGRATION</code> privilege.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Runtime Integration <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">A Snowflake account-level object representing a specific Runtime instance. Each Runtime you create corresponds to one Runtime Integration. Requires the <code>CREATE OPENFLOW RUNTIME INTEGRATION</code> privilege.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">External Access Integration (EAI) <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">A Snowflake object that grants an SPCS Runtime permission to make outbound network connections to specific external hosts and ports. Because SPCS containers are network-isolated by default, every external connection (e.g., to your PostgreSQL instance) must be explicitly allowed through an EAI backed by a Network Rule. Without an EAI, the connector cannot reach the source database.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Runtime Role <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">The Snowflake role assigned to a Runtime. All Snowflake operations performed by the connector (writing tables, creating schemas, using warehouses) run under this role. It must have access to the destination database, warehouse, and any EAIs used by the Runtime. <code>ACCOUNTADMIN</code> cannot be used as a Runtime Role — Openflow explicitly blocks it.</p>
+            </div>
+
+            <!-- ── NIFI TERMS ─────────────────────────────── -->
+            <h2 id="nifi-terms">NiFi / Canvas Terms</h2>
+
+            <div class="term-card">
+                <div class="term-name">Canvas <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">The visual workspace you see when you open a Runtime in the Openflow UI. The canvas is where flows, processors, and connections are displayed and arranged. You interact with flows by right-clicking on the canvas or on individual components. It is provided by Apache NiFi, which is the underlying engine Openflow is built on.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Flow <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">A data pipeline defined on the canvas. A flow consists of Processors connected by relationships (arrows). Data enters as FlowFiles, gets transformed or routed by Processors, and exits through output connections. In Openflow, each connector installs as a pre-built flow.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">FlowFile <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">The unit of data in NiFi. A FlowFile is a record that moves through the pipeline. It has two parts: <strong>attributes</strong> (metadata key-value pairs, like table name or record count) and <strong>content</strong> (the actual data payload, e.g., a batch of rows). The "In / Read/write / Out" metrics on a processor or process group count FlowFiles passing through.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Processor <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">The fundamental building block of a NiFi flow. Each Processor performs a specific task: reading from a database, transforming data, routing based on conditions, or writing to Snowflake. Processors have configurable Properties (settings) and output Relationships (success, failure, etc.). Examples in the PostgreSQL connector: <code>CaptureChangePostgreSQL</code>, <code>PutSnowpipeStreaming</code>, <code>ExecuteSQL</code>.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Process Group <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">A container that groups related Processors together on the canvas. Process groups help organize complex flows. Double-clicking a process group enters it and shows its internal processors. In the PostgreSQL connector, the top-level group is "PostgreSQL", which contains sub-groups: <strong>Snapshot Load</strong>, <strong>Incremental Load</strong>, <strong>Metrics</strong>, and <strong>Stream Staleness Prevention</strong>. You right-click a process group to Start, Stop, or access Parameters.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Connection / Queue <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">The arrows between Processors on the canvas. Each connection carries FlowFiles of a specific relationship (e.g., "success", "failure"). Connections act as queues — FlowFiles wait in the queue until the downstream Processor is ready to consume them. The "Queued" metric shows how many FlowFiles are waiting. A healthy running connector typically shows 0 queued.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Controller Services <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">Shared services that multiple Processors can use. Common examples: database connection pools (DBCPConnectionPool), Snowpipe Streaming clients, and the Table State Store. Controller Services must be <strong>ENABLED</strong> before the processors that depend on them can run. Access them by right-clicking the canvas → "Controller Services" or by right-clicking a process group → "Controller Services". If a Controller Service is not enabled, all dependent processors will fail to initialize.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Bulletin <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">An error or warning message generated by a Processor. Bulletins appear as small notification icons on a processor and in the Bulletin Board. They are the primary way to diagnose connector errors. A healthy connector shows 0 bulletins. Always check bulletins first when troubleshooting — right-click a processor → "View Bulletins", or check the process group's bulletin count in the stats bar.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Parameter Context <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">A named set of key-value configuration variables that Processors reference using the <code>#{parameter_name}</code> syntax. In the PostgreSQL connector there are three contexts: <strong>Source Parameters</strong>, <strong>Destination Parameters</strong>, and <strong>Ingestion Parameters</strong>. Contexts are bound to a process group — right-click the process group → "Parameters" to view and edit them. Changes take effect after clicking Apply; the connector does not need to be reinstalled.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Relationship <span class="term-tag tag-nifi">NiFi</span></div>
+                <p class="term-desc">The named output path of a Processor. When a Processor finishes handling a FlowFile, it sends it down a specific relationship (e.g., "success" or "failure"). Each relationship connects to a downstream Processor or loops back. Unhandled relationships cause FlowFiles to pile up in queues.</p>
+            </div>
+
+            <!-- ── PARAMETER GROUPS ─────────────────────────────── -->
+            <h2 id="parameters">Parameter Groups (PostgreSQL Connector)</h2>
+
+            <div class="term-card">
+                <div class="term-name">Source Parameters <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">Configuration for the <strong>PostgreSQL source database</strong>. Defines how the connector connects to the source: JDBC connection URL, username, password, publication name, JDBC driver file, and replication slot name. These tell the connector <em>where to read data from</em>.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Destination Parameters <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">Configuration for the <strong>Snowflake destination</strong>. Defines where replicated data is written: Destination Database, Destination Schema Pattern, Snowflake Role, Warehouse, and Authentication Strategy. The <strong>Destination Schema Pattern</strong> is required — it determines which schema inside the destination database the connector creates. Using <code>${source.schema.name}</code> mirrors the source schema name.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Ingestion Parameters <span class="term-tag tag-openflow">Openflow</span></div>
+                <p class="term-desc">Configuration for <strong>which tables to replicate and how</strong>. Key parameters: <code>Ingestion Type</code> (full = snapshot first then incremental; incremental = skip snapshot), <code>Included Table Names</code> or <code>Included Table Regex</code> (which tables to replicate), and <code>Merge Task Schedule CRON</code> (how often journal data is merged into destination tables). Without <code>Ingestion Type</code> or <code>Included Table Names</code>, the connector runs silently with 0 bytes transferred.</p>
+            </div>
+
+            <!-- ── CDC TERMS ─────────────────────────────── -->
+            <h2 id="cdc-terms">CDC &amp; Replication Terms</h2>
+
+            <div class="term-card">
+                <div class="term-name">CDC (Change Data Capture) <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">A technique for tracking and capturing row-level changes (INSERT, UPDATE, DELETE) in a source database and streaming them to a target. Instead of copying the entire table periodically, CDC reads only the changes, making replication continuous and near real-time.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Logical Replication / WAL <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">PostgreSQL's mechanism for CDC. The Write-Ahead Log (WAL) records every change made to the database. Logical replication decodes WAL entries into a human-readable change stream. The Openflow connector reads this stream via a <strong>replication slot</strong>. Requires <code>wal_level = logical</code> in PostgreSQL configuration.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Publication <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">A PostgreSQL object that defines which tables are included in logical replication. The Openflow connector reads only tables listed in the publication. Created with <code>CREATE PUBLICATION</code>. A connector cannot replicate a table unless it is included in the publication configured in Source Parameters.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Replication Slot <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">A PostgreSQL mechanism that ensures WAL data is retained until the connector has consumed it. The Openflow connector creates its own replication slot automatically. <strong>Important:</strong> if the connector is paused or removed, the slot remains and PostgreSQL keeps accumulating WAL — this can cause disk space issues on high-traffic databases. Drop the slot manually if you permanently remove the connector.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Snapshot Load <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">The first phase of replication when <code>Ingestion Type = full</code>. The connector reads the current state of all configured tables in bulk and writes them to Snowflake. A table is in <code>SNAPSHOT_REPLICATION</code> state during this phase. Once complete, the table transitions to <code>INCREMENTAL_REPLICATION</code>. Visible as the "Snapshot Load" process group on the canvas.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Incremental Load <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">The ongoing CDC phase after the snapshot completes. The connector continuously reads new changes (INSERT, UPDATE, DELETE) from the PostgreSQL WAL and streams them to Snowflake. Visible as the "Incremental Load" process group on the canvas.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Journal Table <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">An intermediate staging table created by the connector in Snowflake (e.g., <code>customers_JOURNAL_1234567890_1</code>). Incoming changes are first written here via Snowpipe Streaming. The merge task then reads the journal and applies changes to the final destination table. If you see journal tables but no destination table, the merge CRON has not yet run.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">Soft Delete / _SNOWFLAKE_DELETED <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">When a row is deleted in PostgreSQL, the connector does <strong>not</strong> physically remove it from the Snowflake destination table. Instead, it sets the metadata column <code>_SNOWFLAKE_DELETED = TRUE</code>. This preserves the full history of changes. To query only active (non-deleted) rows, always filter with <code>WHERE "_SNOWFLAKE_DELETED" = FALSE</code>. Other metadata columns added to every row: <code>_SNOWFLAKE_INSERTED_AT</code> and <code>_SNOWFLAKE_UPDATED_AT</code>.</p>
+            </div>
+
+            <div class="term-card">
+                <div class="term-name">REPLICA IDENTITY <span class="term-tag tag-cdc">CDC</span></div>
+                <p class="term-desc">A PostgreSQL table setting that controls which columns are included in WAL entries for UPDATE and DELETE operations. The Openflow connector requires <code>REPLICA IDENTITY DEFAULT</code> for tables with primary keys (this is PostgreSQL's default). <strong>Do not set it to FULL</strong> for tables with primary keys — this causes the connector to report <code>MISSING_PRIMARY_KEYS</code> and permanently fail replication for that table.</p>
+            </div>
+
+            <!-- ── UI SYMBOLS ─────────────────────────────── -->
+            <h2 id="ui-symbols">UI Symbols &amp; Indicators</h2>
+            <p>Each process group and processor on the canvas shows a stats bar with colored icons. Here is what each means:</p>
+
+            <table class="symbol-table">
+                <thead><tr><th>Symbol</th><th>Name</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>&#9654;</td><td>Running</td><td>Number of processors currently running (active). A healthy connector shows all processors as running.</td></tr>
+                    <tr><td style="color:#E53E3E">&#9632;</td><td>Stopped</td><td>Number of processors that are stopped. All stopped = connector is paused. Some stopped = partial run, usually indicates a problem.</td></tr>
+                    <tr><td style="color:#DD6B20">&#9650;</td><td>Invalid</td><td>Number of processors with a configuration error (missing required property, disabled controller service). <strong>Even one invalid processor can prevent the whole flow from working correctly.</strong> Fix before starting.</td></tr>
+                    <tr><td style="color:#6B46C1">&#9000;</td><td>Disabled</td><td>Number of processors intentionally disabled. Disabled processors do not run and do not generate errors.</td></tr>
+                    <tr><td>&#10003;</td><td>Valid</td><td>Number of processors with valid configuration. Shown at the bottom of the stats bar.</td></tr>
+                    <tr><td>&#10033;</td><td>Stopped (alt)</td><td>Alternate stopped indicator shown in some NiFi versions.</td></tr>
+                    <tr><td style="color:#29B5E8">&#9679;</td><td>Bulletin</td><td>A blue dot on a processor means it has a recent bulletin (error/warning message). Click or right-click → View Bulletins to read the message.</td></tr>
+                    <tr><td>In</td><td>In</td><td>FlowFiles received by this group in the last 5 minutes. <code>0 (0 bytes) → 0</code> means nothing has flowed in — usually indicates misconfigured Ingestion Parameters.</td></tr>
+                    <tr><td>Read/write</td><td>Read/write</td><td>Bytes read from and written to external systems (databases, Snowflake). Non-zero values confirm data is actively flowing.</td></tr>
+                    <tr><td>Out</td><td>Out</td><td>FlowFiles sent out by this group. A value like <code>1 → 3</code> means 1 FlowFile in the last interval, 3 total.</td></tr>
+                    <tr><td>Queued</td><td>Queued</td><td>FlowFiles currently waiting in connections (queues) to be processed. Should normally be 0. A growing queue indicates a slow or blocked downstream processor.</td></tr>
+                </tbody>
+            </table>
+
+            <!-- ── TABLE REPLICATION STATES ─────────────────────────────── -->
+            <h2 id="table-states">Table Replication States (Table State Store)</h2>
+            <p>The <strong>Table State Store</strong> controller service tracks the replication state of each table. View it via: right-click process group &rarr; Controller Services &rarr; Table State Store &rarr; &#8942; &rarr; View State.</p>
+
+            <table>
+                <thead><tr><th>State</th><th>Meaning</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td><code>NEW</code></td><td>Table is queued for replication but snapshot has not started yet.</td><td>Wait — it will start automatically.</td></tr>
+                    <tr><td><code>SNAPSHOT_REPLICATION</code></td><td>Initial bulk copy of the table is in progress.</td><td>Wait — will transition to INCREMENTAL when done.</td></tr>
+                    <tr><td><code>INCREMENTAL_REPLICATION</code></td><td>Snapshot complete. Connector is streaming live changes. ✅</td><td>Normal operating state. No action needed.</td></tr>
+                    <tr><td><code>FAILED</code></td><td>Replication permanently stopped due to an unrecoverable error (e.g., <code>MISSING_PRIMARY_KEYS</code>).</td><td>Fix the root cause in PostgreSQL, clear the Table State Store, then restart the connector.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <span class="callout-icon">&#9432;</span>
+                <div class="callout-content">
+                    <strong>Further reading</strong>
+                    <p>
+                        <a href="https://docs.snowflake.com/en/user-guide/data-integration/openflow/about" target="_blank">Snowflake Openflow Documentation</a> &mdash;
+                        <a href="https://docs.snowflake.com/en/user-guide/data-integration/openflow/connectors/postgres/about" target="_blank">PostgreSQL Connector Reference</a> &mdash;
+                        <a href="https://nifi.apache.org/docs/nifi-docs/html/user-guide.html" target="_blank">Apache NiFi User Guide</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <a href="cleanup.html"><span><span class="nav-label">&larr; Previous</span><span class="nav-title">Cleanup &amp; Resources</span></span></a>
+            </div>
+        </div>
+        <footer class="footer">Community Lab Guide &mdash; Snowflake Postgres + Openflow CDC Pipeline &mdash; Not an official Snowflake document</footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>
