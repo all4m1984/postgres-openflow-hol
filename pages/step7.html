@@ -44,6 +44,20 @@
         <div class="content">
             <p>The Openflow runtime from Step 6 is now active. Let's install the PostgreSQL CDC connector from the Openflow home page.</p>
 
+            <div class="callout warning">
+                <span class="callout-icon">&#9888;</span>
+                <div class="callout-content">
+                    <strong>Prerequisite: Accept Snowflake Connector Terms</strong>
+                    <p>Before any connector can be installed, your <strong>Org Admin</strong> must accept the Snowflake Connector Terms. If you see the message <em>"Accept connector terms — To install connectors, additional terms need to be accepted"</em>, do the following:</p>
+                    <ol style="margin-top:8px;">
+                        <li>Log in to Snowsight as a user with the <strong>ORGADMIN</strong> role</li>
+                        <li>Navigate to <strong>Admin &rarr; Billing &amp; Terms</strong></li>
+                        <li>Find <strong>Snowflake Connector Terms</strong> and click <strong>Accept</strong></li>
+                        <li>Return to the Openflow connectors page &mdash; the <strong>Install</strong> button will now be active</li>
+                    </ol>
+                </div>
+            </div>
+
             <h3>Install the PostgreSQL Connector</h3>
             <ol>
                 <li>Navigate to the <strong>Openflow overview page</strong> (the Openflow home page, not the canvas)</li>
